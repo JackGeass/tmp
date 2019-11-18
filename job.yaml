@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrate
+        image: onething/pod-migrate
+        command: ["tail -f /dev/null"]
+        imagePullPolicy: Never
+      restartPolicy: Never
+      nodeName: c32010s7
+   
+  backoffLimit: 4
