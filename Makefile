@@ -7,4 +7,8 @@ t:
 all:
 	docker build . -t onething/pod-migrate
 run: all
-	docker run -it --rm -e NAMESPACE=default -e POD=mai-0 -e DESNODE=c32010s7 onething/pod-migrate  #/work/migrations.sh
+	#docker run -it --rm -e NAMESPACE=default -e POD=mai-0 -e DESNODE=c32010s8 onething/pod-migrate  /work/migrations.sh
+	docker run -it --rm -e NAMESPACE=default -e POD=mai-0 -e DESNODE=c32010s8 onething/pod-migrate  /bin/bash #/work/migrations.sh
+test: 
+	docker build . -f Dockerfile.token -t onething/pod-test
+
