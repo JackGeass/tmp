@@ -8,8 +8,9 @@ spec:
     spec:
       containers:
       - name: migrate
-        image: onething/pod-migrate
-        command: ["/bin/sh", "-c","\"/work/migrations.sh\""]
+        #image: onething/pod-migrate
+        image: nginx:stable-alpine
+        #command: ["/bin/sh", "-c","\"/work/migrations.sh\""]
         #command: ["/bin/sh", "-c","\"/bin/sleep 10000\""]
         imagePullPolicy: Never
         env:
@@ -19,8 +20,19 @@ spec:
           value: mai-0 
         - name: DESNODE
           value: c32010s8
+        - name: RootPath
+          value: /data
+        #TODO:hostpath
+        volumeMounts:
+        - name: root
+          mountPath: /data
+      volumes:
+      - name: root
+        hostPath:
+          path: /
       restartPolicy: Never
-      nodeName: c32010s7
+      nodeName: c32010s8
       serviceAccountName: migrate-pods-sa
       automountServiceAccountToken: true
   backoffLimit: 0
+

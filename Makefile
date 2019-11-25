@@ -4,11 +4,27 @@ t:
 	wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
 	mv jq-linux64 jq
 	chmod u+x jq
+	cp $$(which tar) .
 all:
 	docker build . -t onething/pod-migrate
+
+
+
 run: all
 	#docker run -it --rm -e NAMESPACE=default -e POD=mai-0 -e DESNODE=c32010s8 onething/pod-migrate  /work/migrations.sh
 	docker run -it --rm -e NAMESPACE=default -e POD=mai-0 -e DESNODE=c32010s8 onething/pod-migrate  /bin/bash #/work/migrations.sh
-test: 
-	docker build . -f Dockerfile.token -t onething/pod-test
 
+del:
+	kubectl delete -f job.yaml
+test-pod: 
+	docker build . -f Dockerfile.token -t onething/pod-test
+test:
+	-kubectl delete -f job.yaml
+	kubectl apply -f job.yaml
+	sleep 10
+	kubectl describe job migrate
+sa:
+	kubectl apply -f sa.yaml
+	kubectl delete -f testpod.yaml
+	kubectl apply -f testpod.yaml
+	kubectl exec -it volume-test /bin/ash

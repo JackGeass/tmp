@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: migrate-pods-sa
+  #namespace: kube-system
+automountServiceAccountToken: false
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: migrate-pods
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/status
+  - pods/log
+  - services
+  - services/status
+  - endpoints
+  - endpoints/status
+  - deployments
+  verbs:
+  - get
+  - watch
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: migrate-pods-role
+rules:
+- apiGroups: 
+  - ""
+  - "extensions"
+  - "apps"
+  resources: 
+  - pods
+  - pods/status
+  - pods/log
+  - persistentvolumeclaims
+  - persistentvolumes
+  #verbs: ["get", "list", "watch", "create", "update", "patch", "delete"] # 也可以使用['*']
+  verbs: ["*"] # 也可以使用['*']
+  #verbs: 
+  #- "get"
+  #- "create"
+  #- "update"
+  #- "patch"
+  #- "delete"
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: migrate-pods-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: migrate-pods-role
+subjects:
+- kind: ServiceAccount
+  name: migrate-pods-sa
+  ## TODO:
+  namespace: default
