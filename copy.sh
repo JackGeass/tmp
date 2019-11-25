@@ -41,7 +41,13 @@ do
 	")
 	echo $RootPath/$HOSTPATH
 	echo $(dirname "$PodPath") 
-	mkdir -p $(dirname "$PodPath") 
+	#echo $RootPath/$HOSTPATH
+	#echo $(dirname "$PodPath")
+	#mkdir -p $(dirname "$PodPath") 
+	mkdir -p $ROOTPATH/$HOSTPATH
+
+
+
 	#echo $Containers
 	#Mounts=""
 	#for container in "$Containers":
