@@ -8,9 +8,9 @@ spec:
     spec:
       containers:
       - name: migrate
-        #image: onething/pod-migrate
-        image: nginx:stable-alpine
-        #command: ["/bin/sh", "-c","\"/work/migrations.sh\""]
+        image: onething/pod-migrate
+        #image: nginx:stable-alpine
+        command: ["/bin/sh", "-c","\"/copy.sh\""]
         #command: ["/bin/sh", "-c","\"/bin/sleep 10000\""]
         imagePullPolicy: Never
         env:
@@ -22,7 +22,6 @@ spec:
           value: c32010s8
         - name: RootPath
           value: /data
-        #TODO:hostpath
         volumeMounts:
         - name: root
           mountPath: /data

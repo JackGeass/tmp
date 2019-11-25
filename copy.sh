@@ -40,6 +40,8 @@ do
 	| (.spec.hostPath.path)
 	")
 	echo $RootPath/$HOSTPATH
+	echo $(dirname "$PodPath") 
+	mkdir -p $(dirname "$PodPath") 
 	#echo $Containers
 	#Mounts=""
 	#for container in "$Containers":
@@ -49,8 +51,6 @@ do
 	#")
 	#echo $PODPATH
 	#echo $(basedir($PodPath))
-	echo $(dirname "$PodPath") 
-	#mkdir -p $(dirname "$PodPath") 
 	#TODO OPEN BELOW IT
-	#kubectl cp $Namespace/$Pod:$PodPath $ROOTPATH/$HOSTPATH
+	kubectl cp $Namespace/$Pod:$PodPath $ROOTPATH/$HOSTPATH
 done
