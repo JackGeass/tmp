@@ -36,6 +36,10 @@ do
 	| (.spec.hostPath.path)
 	")
 	echo "ToPath:$RootPath/$HOSTPATH"
-	mkdir -p $ROOTPATH/$HOSTPATH
-	retry -f "echo 'cp is fail,Maybe tar not in container'; exit 2" "kubectl cp $Namespace/$Pod:$PodPath $ROOTPATH/$HOSTPATH"
+	
+	not_exist=[ ! -f $ROOTPATH/$HOSTPATH ]
+	if $not_exist; then
+		mkdir -p $ROOTPATH/$HOSTPATH
+	fi
+	retry -f "if $not_exist;then rm -fr $RootPath/$HOSTPATH;fi ;echo 'cp is fail,Maybe tar not in container'; exit 2" "kubectl cp $Namespace/$Pod:$PodPath $ROOTPATH/$HOSTPATH"
 done

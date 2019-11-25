@@ -6,6 +6,10 @@ t:
 	chmod u+x jq
 	cp $$(which tar) .
 all:
+	chmod u+x ./copy.sh
+	chmod u+x ./migrations.sh
+	chmod u+x ./remove.sh
+	chmod u+x ./process.sh
 	docker build . -t onething/pod-migration
 
 
@@ -19,10 +23,11 @@ del:
 test-pod: 
 	docker build . -f Dockerfile.token -t onething/pod-test
 test:
-	-kubectl delete -f job.yaml
-	kubectl apply -f job.yaml
-	sleep 10
-	kubectl describe job migrate
+	-kubectl delete -f copy.yaml
+	kubectl apply -f copy.yaml
+	sleep 5
+	#kubectl describe job migrate
+	kubectl get pod
 sa:
 	kubectl apply -f sa.yaml
 	kubectl delete -f testpod.yaml
