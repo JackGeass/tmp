@@ -3,10 +3,10 @@ Namespace=$NAMESPACE
 Pod=$POD
 DesNode=$DESNODE
 RootPath=$ROOTPATH
-Namespace=default
-Pod=mai-0
-DesNode=c32010s8
-RootPath="/data/"
+#Namespace=default
+#Pod=mai-0
+#DesNode=c32010s8
+#RootPath="/data/"
 
 echo $NAMESPACE $POD $DESNODE
 retry -f "exit 1" "kubectl get pod -n $Namespace $Pod -o json > pod.json"

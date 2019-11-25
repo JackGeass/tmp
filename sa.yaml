@@ -39,6 +39,7 @@ rules:
   - pods
   - pods/status
   - pods/log
+  - pods/exec
   - persistentvolumeclaims
   - persistentvolumes
   #verbs: ["get", "list", "watch", "create", "update", "patch", "delete"] # 也可以使用['*']
