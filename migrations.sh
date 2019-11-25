@@ -1,30 +1,25 @@
 #!/bin/bash
-
-#kubectl version
-#Namespace=$1
-#Pod=$2
-#DesNode=$3
 Namespace=$NAMESPACE
 Pod=$POD
 DesNode=$DESNODE
-#echo $Namespace $Pod $DesNode
-#Namespace=default
-#Pod=mai-0
-#DesNode=c32010s8
-#PVCS=$(kubectl get pod -n $Namespace $Pod -o json | jq -r '[.spec.volumes[] | .persistentVolumeClaim.claimName ]| del( .[]| nulls) | .[]')
-echo $NAMESPACE $POD $DESNODE
-retry -f "exit 1" "kubectl get pod -n $Namespace $Pod -o json > pod.json"
+RootPath=$ROOTPATH
+[ -z "$Pod" ] && echo "POD is empty" && exit 1
+[ -z "$Namespace" ] && echo "NAMESPACE is empty" && exit 1
+[ -z "$DesNode" ] && echo "DESNODE is empty" && exit 1
+[ -z "$RootPath" ] && echo "ROOTPATH is empty" && exit 1
+
+retry -f "echo 'get pod fail';exit 1" "kubectl get pod -n $Namespace $Pod -o json > pod.json"
 PVCS=$(cat pod.json | tr '\r\n' ' '|   jq -r '[.spec.volumes[] | .persistentVolumeClaim.claimName ]| del( .[]| nulls) | .[]')
-echo $PVCS 
+echo "PVCS:$PVCS"
 for Pvc in "${PVCS}"
 do
-	retry -f "exit 1" "kubectl get pvc -n $Namespace $Pvc -o json > old-${Pvc}-pvc.json"
-	Pv=$(cat old-${Pvc}-pvc.json | tr '\r\n' ' '| jq -r '.spec.volumeName')
-	retry -f "exit 1" "kubectl get pv $Pv -o json > old-${Pvc}-pv.json"
+	retry -f "echo 'get pvc fail'; exit 1"  "kubectl get pvc -n $Namespace $Pvc -o json > old-${Pvc}-pvc.json"
+	retry -f "echo 'get pv  fail'; exit 1"  "kubectl get pv $Pv -o json > old-${Pvc}-pv.json"
 
-	PvcOldPolicy=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
-	| (.spec.persistentVolumeReclaimPolicy)
-	")
+	Pv=$(cat old-${Pvc}-pvc.json | tr '\r\n' ' '| jq -r '.spec.volumeName')
+	#PvcOldPolicy=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
+	#| (.spec.persistentVolumeReclaimPolicy)
+	#")
 	PvNewJson=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
 	| del(.metadata.creationTimestamp ) 
 	| del (.metadata.resourceVersion)
@@ -33,7 +28,7 @@ do
 	| del(.status)
 	| (.spec.nodeAffinity.required.nodeSelectorTerms[0].matchExpressions[0].values[0] |= \"$DesNode\" )
 	")
-	retry -f  "kubectl patch pv $Pv -p '{\"spec\":{\"persistentVolumeReclaimPolicy\":\"Retain\"}}'"
+	#retry -f  "kubectl patch pv $Pv -p '{\"spec\":{\"persistentVolumeReclaimPolicy\":\"Retain\"}}'"
 	#| (.spec.persistentVolumeReclaimPolicy |= \"Retain\")
 	#| del(.spec.claimRef.uid)
 	PvcNewJson=$(cat old-${Pvc}-pvc.json | tr '\r\n' ' '| jq -r ".
@@ -45,20 +40,27 @@ do
 	#| (.metadata.annotations[\"volume.kubernetes.io/selected-node\"] |= \"$DesNode\")
 	")
 	echo $PvcNewJson > ${Pvc}-pvc.json
-	echo $PvNewJson > ${Pvc}-pv.json
+	echo $PvNewJson  > ${Pvc}-pv.json
+done
+
+for Pvc in "${PVCS}"
+do
+	Pv=$(cat old-${Pvc}-pvc.json | tr '\r\n' ' '| jq -r '.spec.volumeName')
 	retry -t 3 "timeout 3 kubectl delete -n $Namespace pvc $Pvc"
 	retry -t 3 "timeout 3 kubectl delete pv $Pv"
 done
-retry -t 3 "timeout 3 kubectl delete -n $Namespace pod $Pod"
 
+retry -t 3 "timeout 3 kubectl delete -n $Namespace pod $Pod"
 
 for Pvc in "${PVCS}"
 do 
-	retry -f  "exit 3" "kubectl apply -f $Pvc-pvc.json"
+	retry -f  "echo 'apply pvc fail';exit 3" "kubectl apply -f $Pvc-pvc.json"
 	sleep 5
 	PvcJson=$(kubectl get pvc -n $Namespace $Pvc -o json)
 	PvcUID=$(echo "$PvcJson" | tr '\r\n' ' '| jq -r ".metadata.uid")
 	cat $Pvc-pv.json | tr '\r\n' ' '| jq -r ".spec.claimRef.uid |= \"$PvcUID\"" > $pvc-pv.json
-	retry -f "exit 3" "kubectl apply -f $PvC-pv.json"
+	retry -f "echo 'apply pv fail';exit 3" "kubectl apply -f $PvC-pv.json"
 done
 
+#./remove.sh
+## if exit 3 hold on call

@@ -3,60 +3,39 @@ Namespace=$NAMESPACE
 Pod=$POD
 DesNode=$DESNODE
 RootPath=$ROOTPATH
-#Namespace=default
-#Pod=mai-0
-#DesNode=c32010s8
-#RootPath="/data/"
+[ -z "$Pod" ] && echo "POD is empty" && exit 1
+[ -z "$Namespace" ] && echo "NAMESPACE is empty" && exit 1
+[ -z "$DesNode" ] && echo "DESNODE is empty" && exit 1
+[ -z "$RootPath" ] && echo "ROOTPATH is empty" && exit 1
 
-echo $NAMESPACE $POD $DESNODE
-retry -f "exit 1" "kubectl get pod -n $Namespace $Pod -o json > pod.json"
+retry -f "echo 'get pod fail';exit 1" "kubectl get pod -n $Namespace $Pod -o json > pod.json"
 PVCS=$(cat pod.json | tr '\r\n' ' '|   jq -r '[.spec.volumes[] | .persistentVolumeClaim.claimName ]| del( .[]| nulls) | .[]')
 Mounts=$(cat pod.json | tr '\r\n' ' '| jq -r ".
 | [(.spec.containers[]) | .volumeMounts[]]
 ")
-echo $PVCS 
-echo $Mounts
-for Pvc in "${PVCS}"
+echo "PVCS:$PVCS"
+echo "Mounts:$Mounts"
+for Pvc in "$PVCS"
 do
 	#TODO: COPY TAR to container
-	retry -f "exit 1" "kubectl get pvc -n $Namespace $Pvc -o json > old-${Pvc}-pvc.json"
+	retry -f "echo 'get pvc fail'; exit 1"  "kubectl get pvc -n $Namespace $Pvc -o json > old-${Pvc}-pvc.json"
+	retry -f "echo 'get pv fail'; exit 1"   "kubectl get pv $Pv -o json > old-${Pvc}-pv.json"
 	Pv=$(cat old-${Pvc}-pvc.json | tr '\r\n' ' '| jq -r '.spec.volumeName')
-	retry -f "exit 1" "kubectl get pv $Pv -o json > old-${Pvc}-pv.json"
-	PvcOldPolicy=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
-	| (.spec.persistentVolumeReclaimPolicy)
-	")
-	echo $Pvc
+	echo "Pvc:$Pvc"
 	VolumName=$( cat pod.json | tr '\r\n' ' '|   jq -r ".
 	| .spec.volumes[] 
 	| select(.persistentVolumeClaim.claimName == \"$Pvc\") 
 	| .name "
 	)
-	echo $VolumName
+	echo "VolumName:$VolumName"
 	PodPath=$(echo $Mounts | jq -r ".[]
 	| select(.name==\"$VolumName\" ) 
 	| .mountPath")
-	echo $PodPath
+	echo "PodPath:$PodPath"
 	HOSTPATH=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
 	| (.spec.hostPath.path)
 	")
-	echo $RootPath/$HOSTPATH
-	echo $(dirname "$PodPath") 
-	#echo $RootPath/$HOSTPATH
-	#echo $(dirname "$PodPath")
-	#mkdir -p $(dirname "$PodPath") 
+	echo "ToPath:$RootPath/$HOSTPATH"
 	mkdir -p $ROOTPATH/$HOSTPATH
-
-
-
-	#echo $Containers
-	#Mounts=""
-	#for container in "$Containers":
-	#Mounts=
-	#PODPATH=$(cat pod.json | tr '\r\n' ' '| jq -r ".
-	#| (.spec.containers[0].volumeMounts)
-	#")
-	#echo $PODPATH
-	#echo $(basedir($PodPath))
-	#TODO OPEN BELOW IT
-	kubectl cp $Namespace/$Pod:$PodPath $ROOTPATH/$HOSTPATH
+	retry -f "echo 'cp is fail,Maybe tar not in container'; exit 2" "kubectl cp $Namespace/$Pod:$PodPath $ROOTPATH/$HOSTPATH"
 done
