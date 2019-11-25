@@ -6,7 +6,7 @@ t:
 	chmod u+x jq
 	cp $$(which tar) .
 all:
-	docker build . -t onething/pod-migrate
+	docker build . -t onething/pod-migration
 
 
 
