@@ -45,13 +45,17 @@ do
 	FileExist=$(test -e "$RootPath/$HostPath";echo $?  )
 
 	if [[ $FileExist -eq 0 ]]; 
-	then echo "bakup dir";mv  $RootPath/$HostPath       $RootPath/$(dirname $HostPath)/.$(basename $HostPath)
+	then 
+		if  test  -e "$RootPath/$(dirname $HostPath)/.$(basename $HostPath)";
+		then echo "$(dirname $HostPath)/.$(basename $HostPath) had exist"; exit 1;
+		fi
+		echo "bakup dir";mv  $RootPath/$HostPath       $RootPath/$(dirname $HostPath)/.$(basename $HostPath)
 	else echo "crate dir";
 	fi
 
 	retry -f "if [ $FileExist -eq 0 ];
-	then echo 'recovery';rm -fr $RootPath/$HostPath ; mv $RootPath/$(dirname $HostPath)/.$(basename $HostPath)   $RootPath/$HostPath;
-	else rm -fr $RootPath/$HostPath ; fi; echo 'cp is fail,Maybe tar not in container'; exit 2" "kubectl cp $Namespace/$Pod:$PodPath $RootPath/$HostPath"
+then echo 'recovery';rm -fr $RootPath/$HostPath ; mv $RootPath/$(dirname $HostPath)/.$(basename $HostPath)   $RootPath/$HostPath;
+else rm -fr $RootPath/$HostPath ; fi; echo 'cp is fail,Maybe tar not in container'; exit 2" "kubectl cp $Namespace/$Pod:$PodPath $RootPath/$HostPath"
 
 	rm -fr $RootPath/$(dirname $HostPath)/.$(basename $HostPath)
 done

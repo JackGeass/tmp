@@ -6,7 +6,8 @@ COPY ./retry /bin
 COPY ./jq /bin
 COPY ./migrations.sh /work
 COPY ./copy.sh /work
-
+COPY ./remove.sh /work
+COPY ./process.sh /work
 #git
 #COPY config /root/.kube/config
 #COPY ./krew.tar.gz /work

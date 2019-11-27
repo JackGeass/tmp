@@ -14,13 +14,11 @@ echo "PVCS:$PVCS"
 for Pvc in "${PVCS}"
 do
 	retry -f "echo 'get pvc fail'; exit 1"  "kubectl get pvc -n $Namespace $Pvc -o json > old-${Pvc}-pvc.json"
-	retry -f "echo 'get pv  fail'; exit 1"  "kubectl get pv $Pv -o json > old-${Pvc}-pv.json"
-
 	Pv=$(cat old-${Pvc}-pvc.json | tr '\r\n' ' '| jq -r '.spec.volumeName')
-	#PvcOldPolicy=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
-	#| (.spec.persistentVolumeReclaimPolicy)
-	#")
+	retry -f "echo 'get pv  fail'; exit 1"  "kubectl get pv $Pv -o json > old-${Pvc}-pv.json"
 	PvNewJson=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
+	| del(.metadata.deletionTimestamp)
+	| del(.metadata.deletionGracePeriodSeconds)
 	| del(.metadata.creationTimestamp ) 
 	| del (.metadata.resourceVersion)
 	| del (.metadata.selfLink) 
@@ -28,10 +26,9 @@ do
 	| del(.status)
 	| (.spec.nodeAffinity.required.nodeSelectorTerms[0].matchExpressions[0].values[0] |= \"$DesNode\" )
 	")
-	#retry -f  "kubectl patch pv $Pv -p '{\"spec\":{\"persistentVolumeReclaimPolicy\":\"Retain\"}}'"
-	#| (.spec.persistentVolumeReclaimPolicy |= \"Retain\")
-	#| del(.spec.claimRef.uid)
 	PvcNewJson=$(cat old-${Pvc}-pvc.json | tr '\r\n' ' '| jq -r ".
+	| del(.metadata.deletionTimestamp)
+	| del(.metadata.deletionGracePeriodSeconds)
 	| del(.metadata.creationTimestamp ) 
 	| del(.status)
 	| del (.metadata.selfLink) 
@@ -61,6 +58,3 @@ do
 	cat $Pvc-pv.json | tr '\r\n' ' '| jq -r ".spec.claimRef.uid |= \"$PvcUID\"" > $pvc-pv.json
 	retry -f "echo 'apply pv fail';exit 3" "kubectl apply -f $PvC-pv.json"
 done
-
-#./remove.sh
-## if exit 3 hold on call
