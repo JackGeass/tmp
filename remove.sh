@@ -17,9 +17,10 @@ do
 	echo "Pvc:$Pvc"
 	Pv=$(cat old-${Pvc}-pvc.json | tr '\r\n' ' '| jq -r '.spec.volumeName')
 	retry -f "echo 'get pv fail'; exit 1"   "kubectl get pv $Pv -o json > old-${Pvc}-pv.json"
-	HOSTPATH=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
+	HostPath=$(cat old-${Pvc}-pv.json | tr '\r\n' ' '| jq -r ".
 	| (.spec.hostPath.path)
 	")
-	echo "ToPath:$RootPath/$HOSTPATH"
-	rm -fr $RootPath/$HOSTPATH
+	echo "ToPath:$RootPath/$HostPath"
+	[ -z "$HostPath" ] && echo "HostPath is empty" && exit 1
+	rm -fr $RootPath/$HostPath
 done
